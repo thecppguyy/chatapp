@@ -9,11 +9,19 @@ import { Toaster } from "react-hot-toast"
 
 function App() {
 
-  const { authUser, isCheckingAuth, checkAuth } = useAuthStore()
+  const { authUser, isCheckingAuth, checkAuth, connectSocket } = useAuthStore()
 
   useEffect(() => {
+    console.log("inside use effect")
     checkAuth()
   }, [checkAuth])
+
+  useEffect(() => {
+    if(authUser) {
+      connectSocket()
+    }
+  }, [authUser])
+
 
   if(isCheckingAuth) return <PageLoader />
 
