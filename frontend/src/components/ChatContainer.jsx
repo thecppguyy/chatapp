@@ -5,13 +5,16 @@ import { useAuthStore } from "../store/useAuthStore.js"
 
 function ChatContainer() {
 
-  const { selectedUser, isMessagesLoading, messages, getMessagesByUserId } = useChatStore()
+  const { selectedUser, isMessagesLoading, messages, getMessagesByUserId, subscribeToMessages, unsubscribeFromMessages } = useChatStore()
   const { authUser } = useAuthStore()
   const messageEndRef = useRef()
 
   useEffect(() => {
     getMessagesByUserId(selectedUser._id)
-  }, [selectedUser, getMessagesByUserId])
+    subscribeToMessages()
+
+    return () => unsubscribeFromMessages()
+  }, [selectedUser, getMessagesByUserId, subscribeToMessages, unsubscribeFromMessages])
 
   useEffect(() => {
     if(messageEndRef.current) {

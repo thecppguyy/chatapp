@@ -10,7 +10,7 @@ const server = http.createServer(app)
 
 const io = new Server(server, {
     cors: {
-        origin: ENV.CLIENT_URL,
+        origin: [ENV.CLIENT_URL],
         credentials: true,
     }
 })
@@ -18,6 +18,9 @@ const io = new Server(server, {
 io.use(socketAuthMiddleware)
 
 // Function to check if the user is online or not
+export function getReceiverSocketId(userId) {
+    return userSocketMap[userId]
+}
 
 
 // This is for storing online users
@@ -29,7 +32,7 @@ io.on("connection", (socket) => {
     const userId = socket.userId;
     // adding the online user to userSocketMap object
     userSocketMap[userId] = socket.id;
-
+    console.log("User socket map:", userSocketMap)
     // sending this event i.e. one new user is online to all connected clients
     io.emit("getOnlineUsers", Object.keys(userSocketMap))
 

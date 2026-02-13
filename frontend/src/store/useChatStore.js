@@ -3,6 +3,7 @@ import axiosInstance from "../lib/axios";
 import toast from "react-hot-toast";
 import { useAuthStore } from "./useAuthStore";
 
+
 export const useChatStore = create((set, get) => ({
     
     allContacts: [],
@@ -28,7 +29,7 @@ export const useChatStore = create((set, get) => ({
             const res = await axiosInstance.get("/message/contacts")
             set({allContacts: res.data})
         } catch (error) {
-            toast.error(error.response.data.message)
+            toast.error(error.response?.data?.message)
         }
         finally {
             set({ isUsersLoading: false })
@@ -39,9 +40,10 @@ export const useChatStore = create((set, get) => ({
         set({ isUsersLoading: true })
         try {
             const res = await axiosInstance.get("/message/chats")
+            // console.log("Chats:", res.data)
             set({ chats: res.data })
         } catch (error) {
-            toast.error(error.response.data.message)
+            toast.error(error.response?.data?.message)
         }
         finally {
             set({ isUsersLoading: false })
@@ -53,7 +55,7 @@ export const useChatStore = create((set, get) => ({
         try {
             const res = await axiosInstance.get(`/message/${userId}`)
             set({ messages: res.data})
-            console.log("Messages fetched successfully: ", res.data)
+            // console.log("Messages fetched successfully: ", res.data)
         } catch (error) {
             toast.error(error.response?.data?.message)
             console.log("Error in loading messages:", error)
@@ -88,5 +90,35 @@ export const useChatStore = create((set, get) => ({
             toast.error(error.response?.data?.message || "Something went wrong!")
             set({ messages: messages })
         }
+    },
+
+    subscribeToMessages: () => {
+        const { selectedUser, isSoundEnabled } = get()
+        if(!selectedUser) return;
+        
+        const socket = useAuthStore.getState().socket
+        if(!socket) return;
+
+        socket.on("newMessage", (newMessage) => {
+            const isMessageSentFromSelectedUser = newMessage.senderId === selectedUser._id;
+            if(!isMessageSentFromSelectedUser) return;
+
+            const currentMessages = get().messages
+            set({ messages: [...currentMessages, newMessage]})
+
+            if(isSoundEnabled) {
+                const notificationSound = new Audio("/sounds/notification.mp3")
+
+                notificationSound.currentTime = 0
+                notificationSound.play().catch((err) => console.log("audio play failed:", err))
+            }
+        })
+    },
+
+    unsubscribeFromMessages: () => {
+        const socket = useAuthStore.getState().socket
+        if(!socket) return;
+        socket.off("newMessage")
     }
+
 })) 
